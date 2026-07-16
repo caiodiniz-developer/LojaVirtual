@@ -1,0 +1,27 @@
+{
+  "name": "shopsphere",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ShopSphere — E-commerce Full Stack moderno (Next.js 15 + Express + Prisma + PostgreSQL)",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev --prefix server\" \"npm run dev --prefix web\"",
+    "dev:api": "npm run dev --prefix server",
+    "dev:web": "npm run dev --prefix web",
+    "build": "npm run build --prefix server && npm run build --prefix web",
+    "db:migrate": "npm run prisma:migrate --prefix server",
+    "db:seed": "npm run prisma:seed --prefix server",
+    "prepare": "husky",
+    "lint": "npm run lint --prefix server && npm run lint --prefix web"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "concurrently": "^9.0.1",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "server/**/*.{ts,js}": ["prettier --write"],
+    "web/**/*.{ts,tsx,js,css}": ["prettier --write"]
+  }
+}

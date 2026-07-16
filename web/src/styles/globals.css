@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-display: 'Sora', system-ui, sans-serif;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 8%;
+    --card: 0 0% 100%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 42%;
+    --border: 240 6% 90%;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 8% 7%;
+    --muted: 240 6% 11%;
+    --muted-foreground: 240 5% 66%;
+    --border: 240 6% 15%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-brand-500/25;
+  }
+
+  /* Accessible focus ring everywhere */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-background;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/25;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-border/60 bg-background/70 backdrop-blur-xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 via-violet-500 to-fuchsia-500 bg-clip-text text-transparent;
+  }
+
+  .gradient-brand {
+    @apply bg-gradient-to-r from-brand-600 to-violet-600;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Subtle film grain over the whole app (SVG turbulence noise) */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain {
+      display: none;
+    }
+  }
+}

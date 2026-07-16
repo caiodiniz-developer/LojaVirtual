@@ -1,0 +1,36 @@
+import { Router } from 'express';
+import { authRoutes } from '../modules/auth/auth.routes';
+import { userRoutes } from '../modules/users/user.routes';
+import { productRoutes } from '../modules/products/product.routes';
+import { categoryRoutes } from '../modules/categories/category.routes';
+import { cartRoutes } from '../modules/cart/cart.routes';
+import { wishlistRoutes } from '../modules/wishlist/wishlist.routes';
+import { reviewRoutes } from '../modules/reviews/review.routes';
+import { couponRoutes } from '../modules/coupons/coupon.routes';
+import { addressRoutes } from '../modules/addresses/address.routes';
+import { orderRoutes } from '../modules/orders/order.routes';
+import { dashboardRoutes } from '../modules/dashboard/dashboard.routes';
+import { uploadRoutes } from '../modules/uploads/upload.routes';
+import { newsletterRoutes } from '../modules/newsletter/newsletter.routes';
+import { loyaltyRoutes } from '../modules/loyalty/loyalty.routes';
+import { notificationRoutes } from '../modules/notifications/notification.routes';
+import { stockAlertRoutes } from '../modules/stock-alerts/stock-alert.routes';
+
+export const routes = Router();
+
+routes.use('/auth', authRoutes);
+routes.use('/users', userRoutes);
+routes.use('/products', productRoutes);
+routes.use('/categories', categoryRoutes);
+routes.use('/cart', cartRoutes);
+routes.use('/wishlist', wishlistRoutes);
+routes.use('/reviews', reviewRoutes);
+routes.use('/coupons', couponRoutes);
+routes.use('/addresses', addressRoutes);
+routes.use('/orders', orderRoutes);
+routes.use('/dashboard', dashboardRoutes);
+routes.use('/uploads', uploadRoutes);
+routes.use('/newsletter', newsletterRoutes);
+routes.use('/loyalty', loyaltyRoutes);
+routes.use('/notifications', notificationRoutes);
+routes.use('/stock-alerts', stockAlertRoutes);

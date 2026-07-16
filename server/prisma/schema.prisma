@@ -1,0 +1,269 @@
+// ShopSphere — database schema
+// Prices are stored in cents (Int) to avoid floating point issues.
+// SQLite keeps the project zero-config; swap the datasource for PostgreSQL in
+// production (enums/String[] variants are noted in the README).
+// Enum-like fields are validated with Zod at the API boundary:
+//   User.role        → CUSTOMER | ADMIN
+//   Order.status     → PENDING | PAID | PROCESSING | SHIPPED | DELIVERED | CANCELLED
+//   Payment.method   → CREDIT_CARD | PIX | BOLETO
+//   Payment.status   → PENDING | APPROVED | DECLINED | REFUNDED
+//   Coupon.type      → PERCENTAGE | FIXED
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  password            String
+  role                String    @default("CUSTOMER")
+  avatar              String?
+  refreshToken        String?
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+  loyaltyPoints       Int       @default(0)
+  wishlistToken       String?   @unique // public share link token
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  pointsEntries PointsEntry[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// Loyalty points ledger — one row per earn/spend event, sums to User.loyaltyPoints
+model PointsEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int // positive = earned, negative = spent
+  reason    String // ORDER | REVIEW | SIGNUP | REDEEM
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("points_entries")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // ORDER | POINTS | STOCK | SYSTEM
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+// "Notify me when back in stock" subscriptions
+model StockAlert {
+  id        String    @id @default(cuid())
+  email     String
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  notifiedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([email, productId])
+  @@index([productId])
+  @@map("stock_alerts")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  image       String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  createdAt   DateTime   @default(now())
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  price       Int // cents
+  discount    Int      @default(0) // percentage 0-90
+  images      Json // string[]
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  stock       Int      @default(0)
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  sold        Int      @default(0)
+  tags        Json // string[]
+  isFeatured  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviews       Review[]
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  stockAlerts   StockAlert[]
+
+  @@index([categoryId])
+  @@index([price])
+  @@index([createdAt])
+  @@map("products")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating       Int // 1-5
+  title        String?
+  comment      String
+  images       Json     @default("[]") // string[] of photo URLs
+  verified     Boolean  @default(false) // author has a delivered order with this product
+  helpfulCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  type        String // PERCENTAGE | FIXED
+  value       Int // percentage or cents, depending on type
+  minSubtotal Int? // cents
+  maxUses     Int?
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@map("coupons")
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String   @default("Casa")
+  street     String
+  number     String
+  complement String?
+  district   String
+  city       String
+  state      String
+  zipCode    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("addresses")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  code            String      @unique // human-friendly, e.g. SS-1A2B3C
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  status          String      @default("PENDING")
+  subtotal        Int // cents
+  discount        Int         @default(0) // cents
+  shippingCost    Int         @default(0) // cents
+  total           Int // cents
+  couponCode      String?
+  shippingMethod  String
+  shippingAddress Json // snapshot of the address at purchase time
+  items           OrderItem[]
+  payment         Payment?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title     String // snapshot
+  image     String // snapshot
+  price     Int // cents at purchase time
+  quantity  Int
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method        String // CREDIT_CARD | PIX | BOLETO
+  status        String    @default("PENDING")
+  amount        Int // cents
+  cardLast4     String?
+  transactionId String    @unique
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@map("payments")
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_subscribers")
+}
