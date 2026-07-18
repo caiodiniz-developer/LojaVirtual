@@ -203,6 +203,12 @@ npm run dev          # API :3333 + Web :3000
 
 ---
 
+## ☁️ Deploy
+
+Guia completo em **[DEPLOY.md](DEPLOY.md)**: contas a criar (Neon, Render, Vercel,
+Cloudinary, Resend), todas as variáveis de ambiente de cada serviço, conversão do
+schema SQLite → PostgreSQL e checklist de troubleshooting.
+
 ## 🔮 Roadmap
 
 - [ ] Testes (Vitest/Testing Library + Supertest) e CI
